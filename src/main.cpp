@@ -6,7 +6,7 @@
 
 // DHT11 definitions
 
-#define DHT_PIN A0
+#define DHT_PIN 7
 #define DHT_TYPE DHT11
 
 // LCD_I2C definitions
@@ -15,7 +15,7 @@
 #define LCD_LINE_NUM 2 // LCD rows
 #define LCD_ADDR 0x27  // LCD I2C address
 
-// LED's definitions
+// RGB LED definitions
 
 #define RED_LED_PIN 2
 #define GREEN_LED_PIN 3
@@ -25,54 +25,77 @@
 
 #define BUZZER_PIN 5
 
-void initLCD(void);
-float readTemperature(void);
-float readHumidity(void);
-void toggleRedLed(int);
-void toggleGreenLed(int);
-void toggleBlueLed(int);
+// Function prototypes
 
-DHT dht(DHT_PIN, DHT_TYPE);
-LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COL_NUM, LCD_LINE_NUM);
+void initLCD(void);
+void showInitialScreen(void);
+void showFailScreen(void);
+
+float getDHTTemperature(void);
+int getDHTHumidity(void);
+
+void setClimateOption(int);
+
+void showTemperatureOnLCD(float);
+void showHumidityOnLCD(int);
+
+DHT dht(DHT_PIN, DHT_TYPE); // creates new DHT instance
+LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COL_NUM,
+                      LCD_LINE_NUM); // creates new LCD_I2C instance
 
 void setup(void) {
   Serial.begin(9600);
 
-  Serial.println("Atividade Extensionsista II - Carlos E. Miranda (3793087)");
+  pinMode(RED_LED_PIN, OUTPUT);
+  pinMode(GREEN_LED_PIN, OUTPUT);
+  pinMode(BLUE_LED_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  dht.begin();
 
   initLCD();
+
+  showInitialScreen();
 }
 
 void loop(void) {
 
-  float temperature = readTemperature();
-  float humidity = readHumidity();
+  float temperature = 30;
+  int humidity = 30;
 
   if (isnan(temperature) || isnan(humidity))
 
-    Serial.println("Failed trying to read DHT11.");
+    showFailScreen();
 
   else {
 
-    lcd.setCursor(0, 0);
-    lcd.print("Temp: ");
+    lcd.clear();
 
-    toggleRedLed(2000);
-    toggleGreenLed(2000);
-    toggleBlueLed(2000);
+    showTemperatureOnLCD(temperature);
+    showHumidityOnLCD(humidity);
+
+    if ((temperature >= 24 && temperature <= 26) && humidity >= 51)
+      setClimateOption(1); // good temperature / humidity
+    else if ((temperature >= 20 && temperature <= 23) &&
+             (humidity >= 31 && humidity <= 50))
+      setClimateOption(2); // average temperature / humidity
+    else if ((temperature >= 27 && humidity <= 30))
+      setClimateOption(3); // bad temperature / humidity
+
+    delay(1000 * 3 * 1); // 15 seconds
   }
-
-  delay(1000);
 }
 
+// initializes LCD
 void initLCD(void) {
 
-  lcd.init();      // Starts LCD communication
-  lcd.backlight(); // Turns on LCD backlight
-  lcd.clear();     // Clear LCD screen
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
 }
 
-float readTemperature(void) {
+// get temperature data from sensor
+float getDHTTemperature(void) {
 
   float temperature = 0.00f;
 
@@ -81,32 +104,91 @@ float readTemperature(void) {
   return temperature;
 }
 
-float readHumidity(void) {
+// get humidity data from sensor
+int getDHTHumidity(void) {
 
-  float humidity = 0.00f;
+  int humidity = 0;
 
   humidity = dht.readHumidity();
 
   return humidity;
 }
 
-void toggleRedLed(int delayInMs) {
+// set climate option
+void setClimateOption(int option) {
 
-  digitalWrite(RED_LED_PIN, 1);
-  delay(delayInMs);
-  digitalWrite(RED_LED_PIN, 0);
+  switch (option) {
+  case 1:
+    digitalWrite(RED_LED_PIN, 0);
+    digitalWrite(GREEN_LED_PIN, 1);
+    digitalWrite(BLUE_LED_PIN, 0);
+    break;
+
+  case 2:
+    digitalWrite(RED_LED_PIN, 1);
+    digitalWrite(GREEN_LED_PIN, 1);
+    digitalWrite(BLUE_LED_PIN, 0);
+    break;
+
+  case 3:
+    digitalWrite(RED_LED_PIN, 1);
+    digitalWrite(GREEN_LED_PIN, 0);
+    digitalWrite(BLUE_LED_PIN, 0);
+
+    for (int i = 0; i < 4; i++) {
+
+      digitalWrite(BUZZER_PIN, 1);
+      delay(70);
+      digitalWrite(BUZZER_PIN, 0);
+      delay(70);
+    }
+
+    break;
+
+  default:
+    break;
+  }
 }
 
-void toggleGreenLed(int delayInMs) {
-
-  digitalWrite(GREEN_LED_PIN, 1);
-  delay(delayInMs);
-  digitalWrite(GREEN_LED_PIN, 0);
+// show temperature on lcd screen
+void showTemperatureOnLCD(float temperature) {
+  lcd.setCursor(0, 0);
+  lcd.print("Temp.: ");
+  lcd.setCursor(7, 0);
+  lcd.print(temperature);
 }
 
-void toggleBlueLed(int delayInMs) {
+// show humidity on lcd screen
+void showHumidityOnLCD(int humidity) {
+  lcd.setCursor(0, 1);
+  lcd.print("Humi.: ");
+  lcd.setCursor(7, 1);
+  lcd.print(humidity);
+}
 
-  digitalWrite(BLUE_LED_PIN, 1);
-  delay(delayInMs);
-  digitalWrite(BLUE_LED_PIN, 0);
+// show initial screen
+void showInitialScreen(void) {
+  lcd.setCursor(0, 0);
+  lcd.print("  Ativ. Ext. II ");
+  lcd.setCursor(0, 1);
+  lcd.print("     Uninter    ");
+
+  delay(3000);
+
+  lcd.setCursor(0, 0);
+  lcd.print(" Carlos Miranda ");
+  lcd.setCursor(0, 1);
+  lcd.print("     3793087    ");
+
+  delay(3000);
+
+  lcd.clear();
+}
+
+// show fail screen is sensor reading fails
+void showFailScreen(void) {
+  lcd.setCursor(0, 0);
+  lcd.print("  Falha ao ler  ");
+  lcd.setCursor(0, 1);
+  lcd.print(" dados do DHT11.");
 }
