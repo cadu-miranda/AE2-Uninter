@@ -44,7 +44,6 @@ LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COL_NUM,
                       LCD_LINE_NUM); // creates new LCD_I2C instance
 
 void setup(void) {
-  Serial.begin(9600);
 
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
@@ -71,17 +70,15 @@ void loop(void) {
 
   else {
 
-    lcd.clear();
-
     showTemperatureOnLCD(temperature);
     showHumidityOnLCD(humidity);
 
-    if ((temperature >= 24 && temperature <= 26) && humidity >= 51)
+    if ((temperature >= 24.00f && temperature <= 26.00f) && humidity >= 51.00f)
       setClimateOption(1); // good temperature / humidity
-    else if ((temperature >= 20 && temperature <= 23) &&
-             (humidity >= 31 && humidity <= 50))
+    else if ((temperature >= 20.00f && temperature <= 23.00f) &&
+             (humidity >= 31.00f && humidity <= 50.00f))
       setClimateOption(2); // average temperature / humidity
-    else if ((temperature >= 27 && humidity <= 30))
+    else if ((temperature >= 27.00f && humidity <= 30.00f))
       setClimateOption(3); // bad temperature / humidity
 
     delay(1000 * 3 * 1); // 3 seconds
