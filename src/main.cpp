@@ -32,12 +32,12 @@ void showInitialScreen(void);
 void showFailScreen(void);
 
 float getDHTTemperature(void);
-int getDHTHumidity(void);
+float getDHTHumidity(void);
 
 void setClimateOption(int);
 
 void showTemperatureOnLCD(float);
-void showHumidityOnLCD(int);
+void showHumidityOnLCD(float);
 
 DHT dht(DHT_PIN, DHT_TYPE); // creates new DHT instance
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COL_NUM,
@@ -50,6 +50,9 @@ void setup(void) {
   pinMode(GREEN_LED_PIN, OUTPUT);
   pinMode(BLUE_LED_PIN, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  digitalWrite(LED_BUILTIN, 0);
 
   dht.begin();
 
@@ -60,8 +63,7 @@ void setup(void) {
 
 void loop(void) {
 
-  float temperature = 30;
-  int humidity = 30;
+  float temperature = getDHTTemperature(), humidity = getDHTHumidity();
 
   if (isnan(temperature) || isnan(humidity))
 
@@ -82,7 +84,7 @@ void loop(void) {
     else if ((temperature >= 27 && humidity <= 30))
       setClimateOption(3); // bad temperature / humidity
 
-    delay(1000 * 3 * 1); // 15 seconds
+    delay(1000 * 3 * 1); // 3 seconds
   }
 }
 
@@ -105,9 +107,9 @@ float getDHTTemperature(void) {
 }
 
 // get humidity data from sensor
-int getDHTHumidity(void) {
+float getDHTHumidity(void) {
 
-  int humidity = 0;
+  float humidity = 0.00f;
 
   humidity = dht.readHumidity();
 
@@ -152,18 +154,25 @@ void setClimateOption(int option) {
 
 // show temperature on lcd screen
 void showTemperatureOnLCD(float temperature) {
+
   lcd.setCursor(0, 0);
   lcd.print("Temp.: ");
   lcd.setCursor(7, 0);
   lcd.print(temperature);
+  lcd.print(" \337C");
 }
 
 // show humidity on lcd screen
-void showHumidityOnLCD(int humidity) {
+void showHumidityOnLCD(float humidity) {
+
+  bool isHighHumidity = humidity >= 100.00f;
+
   lcd.setCursor(0, 1);
   lcd.print("Humi.: ");
   lcd.setCursor(7, 1);
   lcd.print(humidity);
+  lcd.setCursor(isHighHumidity ? 14 : 13, 1);
+  lcd.print("%");
 }
 
 // show initial screen
