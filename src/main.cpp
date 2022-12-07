@@ -81,7 +81,7 @@ void loop(void) {
     else if ((temperature >= 27.00f && humidity <= 30.00f))
       setClimateOption(3); // bad temperature / humidity
 
-    delay(1000 * 3 * 1); // 3 seconds
+    delay(3000); // 3 seconds
   }
 }
 
