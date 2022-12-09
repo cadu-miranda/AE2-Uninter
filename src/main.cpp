@@ -165,7 +165,7 @@ void showHumidityOnLCD(float humidity) {
   bool isHighHumidity = humidity >= 100.00f;
 
   lcd.setCursor(0, 1);
-  lcd.print("Humi.: ");
+  lcd.print("Umid.: ");
   lcd.setCursor(7, 1);
   lcd.print(humidity);
   lcd.setCursor(isHighHumidity ? 14 : 13, 1);
